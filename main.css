@@ -1,5 +1,6 @@
 body {
-    padding: 0;
+    padding-left: 10%;
+    padding-right: 10%;
     margin: 0;
     background: #fafafa;
 }
@@ -40,15 +41,27 @@ body {
 
 .title {
     font-weight: 400;
-    color: #009a9a;
-    font-family: 'Montserrat', sans-serif;
+    color: #763626;
+    font-family: 'Major Mono Display', monospace;
     line-height: 1.5;
+    font-size: 64px;
+    margin-bottom: 5%;
 }
 
 .subtitle {
     font-weight: 300;
-    color: #222222;
+    color: #2A3132;
     line-height: 1.5;
+    font-family: 'Nunito', sans-serif;
+}
+
+.subtitle a {
+    text-decoration: none;
+    color: #763626;
+}
+
+.subtitle a:hover {
+    color: #336b87;
 }
 
 .project-group h3 {
@@ -164,4 +177,27 @@ body {
 
 .contact a:hover {
     color: #009a9a;
+}
+
+
+.footer {
+    position: static;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    font-family: "Major Mono Display", monospace;
+    color: #444444;
+    text-align: center;
+    font-weight: 400;
+}
+
+.footer a {
+    font-family: 'Major Mono Display', monospace;
+    color: #763626;
+    font-weight: 400;
+}
+
+.footer a:hover {
+    text-decoration: none;
+    color: #763626;
 }
