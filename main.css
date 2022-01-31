@@ -15,14 +15,14 @@ body {
     font-weight: 800;
 }
 .nav-link {
-    font-family: 'Montserrat', sans-serif;
-    color: #222222;
+    font-family: 'Major Mono Display', sans-serif;
+    color: #763626;
     font-weight: 600;
     cursor: pointer;
     margin-right: 1em !important;
 }
 .nav-link:hover {
-    color: #009a9a;
+    color: #763626;
 }
 .navbar-collapse {
     justify-content: flex-end;
@@ -64,6 +64,83 @@ body {
     color: #336b87;
 }
 
+.section {
+    font-weight: 400;
+    color: #763626;
+    font-family: 'Major Mono Display', monospace;
+    line-height: 1.5;
+    font-size: 28px;
+    margin-left: 5%;
+}
+
+.section a {
+    text-decoration: none;
+    color: #763626;
+}
+
+.section-title {
+    font-weight: 400;
+    color: #763626;
+    font-family: 'Major Mono Display', monospace;
+    line-height: 1.5;
+    font-size: 48px;
+    margin-bottom: 5%;
+}
+
+.section-header {
+    font-weight: 600;
+    color: #2A3132;
+    font-family: 'Nunito', sans-serif;
+}
+
+.section-text {
+    font-weight: 400;
+    color: #2A3132;
+    font-family: 'Nunito', sans-serif;
+    font-size: 18px;
+}
+
+.section-text a {
+    text-decoration: none;
+    color: #763626;
+}
+
+.section-text code {
+    background-color: #dfdfdf;
+    color:#763626;
+}
+
+figure {
+    text-align: center;
+}
+
+.footer {
+    position: static;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    font-family: "Major Mono Display", monospace;
+    color: #444444;
+    text-align: center;
+    font-weight: 400;
+}
+
+.footer h5 {
+    margin-bottom: 2%;
+}
+
+.footer a {
+    color: #763626;
+    font-weight: 400;
+}
+
+.footer a:hover {
+    text-decoration: none;
+    color: #763626;
+}
+
+
+
 .project-group h3 {
     color: #444444;
     font-family: 'Montserrat', sans-serif;
@@ -73,15 +150,6 @@ body {
     padding-left: 5%;
 }
 
-.arrow {
-    border: solid #009a9a;
-    border-width: 0 3px 3px 0;
-    display: inline-block;
-    padding: 7px;
-    transform: rotate(-45deg);
-    -webkit-transform: rotate(-45deg);
-    -ms-transform: rotate(-45deg);
-}
 
 .container {
     position: relative;
@@ -179,25 +247,3 @@ body {
     color: #009a9a;
 }
 
-
-.footer {
-    position: static;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    font-family: "Major Mono Display", monospace;
-    color: #444444;
-    text-align: center;
-    font-weight: 400;
-}
-
-.footer a {
-    font-family: 'Major Mono Display', monospace;
-    color: #763626;
-    font-weight: 400;
-}
-
-.footer a:hover {
-    text-decoration: none;
-    color: #763626;
-}
