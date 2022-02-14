@@ -1,0 +1,116 @@
+2022-02-13 09:42:53,466 | MainThread   | [DEBUG   ] | <module>            |: debug
+2022-02-13 09:42:53,470 | MainThread   | [INFO    ] | <module>            |: info
+2022-02-13 09:42:53,475 | MainThread   | [WARNING ] | <module>            |: warning
+2022-02-13 09:42:53,479 | MainThread   | [ERROR   ] | <module>            |: error
+2022-02-13 09:42:53,482 | MainThread   | [CRITICAL] | <module>            |: critical
+2022-02-13 09:48:36,795 | MainThread   | [DEBUG   ] | __init__            |: Python Info: sys.version_info(major=3, minor=10, micro=2, releaselevel='final', serial=0)
+2022-02-13 09:48:36,797 | MainThread   | [DEBUG   ] | __init__            |: System Info: Windows-10-10.0.19042-SP0
+2022-02-13 09:48:36,799 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: C0:07:C0:8D:24:44
+2022-02-13 09:48:41,277 | MainThread   | [INFO    ] | _connect            |: Connected to C0:07:C0:8D:24:44
+2022-02-13 09:49:15,757 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from C0:07:C0:8D:24:44
+2022-02-13 10:02:04,303 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: C0:07:C0:8D:24:44
+2022-02-13 10:02:08,994 | MainThread   | [INFO    ] | _connect            |: Connected to C0:07:C0:8D:24:44
+2022-02-13 10:09:21,845 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from C0:07:C0:8D:24:44
+2022-02-13 10:11:02,818 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: C0:07:C0:8D:24:44
+2022-02-13 10:11:07,441 | MainThread   | [INFO    ] | _connect            |: Connected to C0:07:C0:8D:24:44
+2022-02-13 10:12:47,039 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from C0:07:C0:8D:24:44
+2022-02-13 10:21:45,035 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: C0:07:C0:8D:24:44
+2022-02-13 10:21:49,093 | MainThread   | [INFO    ] | _connect            |: Connected to C0:07:C0:8D:24:44
+2022-02-13 10:53:17,123 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from C0:07:C0:8D:24:44
+2022-02-13 10:53:25,593 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: C0:07:C0:8D:24:44
+2022-02-13 10:53:30,390 | MainThread   | [INFO    ] | _connect            |: Connected to C0:07:C0:8D:24:44
+2022-02-13 10:57:48,427 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 252.5
+2022-02-13 10:57:48,437 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 253.0
+2022-02-13 10:57:48,447 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 253.5
+2022-02-13 10:57:48,456 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 254.0
+2022-02-13 10:57:48,466 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 254.5
+2022-02-13 10:57:48,471 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 255.0
+2022-02-13 10:57:48,478 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 255.5
+2022-02-13 10:57:48,483 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 256.0
+2022-02-13 10:57:48,487 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 256.5
+2022-02-13 10:57:48,492 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 257.0
+2022-02-13 10:57:48,499 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 257.5
+2022-02-13 10:57:48,503 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 258.0
+2022-02-13 10:57:48,509 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 258.5
+2022-02-13 10:57:48,514 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 259.0
+2022-02-13 10:57:48,518 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 259.5
+2022-02-13 10:57:48,521 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 260.0
+2022-02-13 10:57:48,524 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 260.5
+2022-02-13 10:57:48,530 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 261.0
+2022-02-13 10:57:48,534 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 261.5
+2022-02-13 10:57:48,537 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 262.0
+2022-02-13 10:58:10,924 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 278.0
+2022-02-13 10:58:10,934 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 278.5
+2022-02-13 10:58:10,943 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 279.0
+2022-02-13 10:58:10,955 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 279.5
+2022-02-13 10:58:10,960 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 280.0
+2022-02-13 10:58:10,965 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 280.5
+2022-02-13 10:58:10,970 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 281.0
+2022-02-13 10:58:10,985 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 281.5
+2022-02-13 10:58:10,989 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 282.0
+2022-02-13 10:58:10,993 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 282.5
+2022-02-13 10:58:10,996 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 283.0
+2022-02-13 10:58:11,000 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 283.5
+2022-02-13 10:58:11,003 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 284.0
+2022-02-13 10:58:11,012 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 284.5
+2022-02-13 10:58:11,053 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 285.0
+2022-02-13 11:00:17,299 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from C0:07:C0:8D:24:44
+2022-02-13 11:02:55,541 | MainThread   | [DEBUG   ] | <module>            |: debug
+2022-02-13 11:02:55,544 | MainThread   | [INFO    ] | <module>            |: info
+2022-02-13 11:02:55,547 | MainThread   | [WARNING ] | <module>            |: warning
+2022-02-13 11:02:55,551 | MainThread   | [ERROR   ] | <module>            |: error
+2022-02-13 11:02:55,559 | MainThread   | [CRITICAL] | <module>            |: critical
+2022-02-13 11:03:00,605 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: C0:07:C0:8D:24:44
+2022-02-13 11:03:04,576 | MainThread   | [INFO    ] | _connect            |: Connected to C0:07:C0:8D:24:44
+2022-02-13 11:03:30,558 | MainThread   | [INFO    ] | <module>            |: Robot says -> BIG RED
+2022-02-13 11:03:53,102 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 45.5
+2022-02-13 11:03:53,112 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 46.0
+2022-02-13 11:03:53,119 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 46.5
+2022-02-13 11:03:53,133 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 47.0
+2022-02-13 11:03:53,139 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 47.5
+2022-02-13 11:03:53,154 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 48.0
+2022-02-13 11:03:53,169 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 48.5
+2022-02-13 11:03:53,174 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 49.0
+2022-02-13 11:03:53,183 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 49.5
+2022-02-13 11:03:53,193 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 50.0
+2022-02-13 11:03:53,206 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 50.5
+2022-02-13 11:03:53,215 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 51.0
+2022-02-13 11:03:53,220 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 51.5
+2022-02-13 11:03:53,235 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 52.0
+2022-02-13 11:03:53,303 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 52.5
+2022-02-13 11:04:04,636 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from C0:07:C0:8D:24:44
+2022-02-13 11:06:26,876 | MainThread   | [INFO    ] | exit_handler        |: Exiting...
+2022-02-13 11:06:26,889 | MainThread   | [WARNING ] | exit_handler        |: Could not disconnect before exiting
+2022-02-13 11:06:26,894 | MainThread   | [WARNING ] | exit_handler        |: Not connected to a BLE device
+2022-02-13 11:06:27,254 | MainThread   | [WARNING ] | __del__             |: Could not delete BaseBLEController instance before exiting
+2022-02-13 11:06:27,349 | MainThread   | [WARNING ] | __del__             |: Not connected to a BLE device
+2022-02-13 11:06:37,847 | MainThread   | [DEBUG   ] | <module>            |: debug
+2022-02-13 11:06:37,854 | MainThread   | [INFO    ] | <module>            |: info
+2022-02-13 11:06:37,859 | MainThread   | [WARNING ] | <module>            |: warning
+2022-02-13 11:06:37,862 | MainThread   | [ERROR   ] | <module>            |: error
+2022-02-13 11:06:37,868 | MainThread   | [CRITICAL] | <module>            |: critical
+2022-02-13 11:06:38,460 | MainThread   | [DEBUG   ] | __init__            |: Python Info: sys.version_info(major=3, minor=10, micro=2, releaselevel='final', serial=0)
+2022-02-13 11:06:38,463 | MainThread   | [DEBUG   ] | __init__            |: System Info: Windows-10-10.0.19042-SP0
+2022-02-13 11:06:38,466 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: C0:07:C0:8D:24:44
+2022-02-13 11:06:42,689 | MainThread   | [INFO    ] | _connect            |: Connected to C0:07:C0:8D:24:44
+2022-02-13 11:06:48,736 | MainThread   | [INFO    ] | <module>            |: Robot says -> BIG RED
+2022-02-13 11:06:58,570 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 13.0
+2022-02-13 11:06:58,580 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 13.5
+2022-02-13 11:06:58,586 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 14.0
+2022-02-13 11:06:58,595 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 14.5
+2022-02-13 11:06:58,602 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 15.0
+2022-02-13 11:06:58,609 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 15.5
+2022-02-13 11:06:58,616 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 16.0
+2022-02-13 11:06:58,622 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 16.5
+2022-02-13 11:06:58,625 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 17.0
+2022-02-13 11:06:58,634 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 17.5
+2022-02-13 11:06:58,638 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 18.0
+2022-02-13 11:06:58,646 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 18.5
+2022-02-13 11:06:58,651 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 19.0
+2022-02-13 11:06:58,655 | MainThread   | [INFO    ] | float_receive_cb    |: Received new float value from Arty: 19.5
+2022-02-13 11:07:02,537 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from C0:07:C0:8D:24:44
+2022-02-13 11:07:02,666 | MainThread   | [INFO    ] | exit_handler        |: Exiting...
+2022-02-13 11:07:02,670 | MainThread   | [WARNING ] | exit_handler        |: Could not disconnect before exiting
+2022-02-13 11:07:02,674 | MainThread   | [WARNING ] | exit_handler        |: Not connected to a BLE device
+2022-02-13 11:07:02,815 | MainThread   | [WARNING ] | __del__             |: Could not delete BaseBLEController instance before exiting
+2022-02-13 11:07:02,887 | MainThread   | [WARNING ] | __del__             |: Not connected to a BLE device
