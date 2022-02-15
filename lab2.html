@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+ 
+        <title>ECE 4960 Lab 2 - Krithik Ranjan</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+        <link rel="stylesheet" type="text/css" href="main.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@200;300;400;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+        <link href="https://fonts.googleapis.com/css2?family=Major+Mono+Display&display=swap" rel="stylesheet">
+
+        <link href="prism.css" rel="stylesheet" />
+
+        <!--
+        <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+        <link rel="icon" href="favicon.ico" type="image/x-icon">
+        -->
+
+    </head>
+    <body>
+        <!--
+        <nav class="navbar navbar-expand-md">
+            
+            <a class="navbar-brand">ECE 4960</a>
+            <button class="navbar-toggler navbar-dark" type="button" data-toggle="collapse" data-target="#main-navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="main-navigation">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">COURSE WEBSITE</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">CODE REPO</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        -->
+
+        <div class="container-fluid projects">
+            <div class="row align-items-center">
+                <div class="col-lg-12 col-md-12 col-sm-12">
+                    <h2 class="section-title">LAB 2<br>Bluetooth</h2>
+                    <p class="section-text">In the second lab of ECE 4960 Fast Robots, the main objective was to set up the Bluetooth communication between the Artemis board and our computers. This was an essential step, as in future labs we will primarily be using Bluetooth to communicate with and control the robot. This lab involved setting up the Bluetooth stack on the Artemis side (through Arduino), and the computer side (through Python). In this course, we use BLE (Bluetooth Low-Energy), which is optimized for low power usage at low data rates.</p>
+
+                    <h4 class="section-header">Setup</h4>
+                    <p class="section-text">The first part of the setup involved setting up the Python working environment on my computer. I followed the steps outlined in the lab write-up to install Python 3.10.2, set up and activate a virtual environment, install necessary packages. On the Artemis side, most of the setup remained the same from Lab 1, except installing a new ArduinoBLE library from the library manager. </p>
+                    <p class="section-text">The sample code provided in <code class="inline-code">ble_arduino/ble_arduino.ino</code> and <code class="inline-code">demo.ipynb</code> was helpful to start with and check if the Bluetooth setup was done properly. After compiling and uploading the Arduino sketch onto Artemis, we can view the MAC address for our specific Artemis board by opening the Serial Monitor as shown. This address then needs to be updated in the <code class="inline-code">ble_python/connection.yaml</code>.</p>
+                    <figure><img src="images/lab2/artemis-mac.png" width="90%"><figcaption>Figure: Artemis MAC address displayed on Serial monitor.</figcaption></figure>
+                    <p class="section-text">Running the first few cells on the Jupyter notebook should connect the computer to the Artemis board through Bluetooth with appropriate messages shown on both ends. However, while testing the connection, I ran into an issue where the Jupyter cell will not stop the execution, even after the connection has been established. After trying to debug this issue a few different ways and talking with the TA, I discovered that this is an issue with the backend Bluetooth drivers on Windows 11 that was also faced by other students working with Windows 11. I’m thankful for the week-long extension given by the course staff to complete this lab using the lab computers. I was also able to use my older computer with Windows 10 to work on parts of this lab. </p>
+
+                    <h4 class="section-header">Lab Tasks</h4>
+                    <p class="section-text">After ensuring that the Bluetooth connection is working properly through the demo notebook, we needed to complete the implementation of the remaining robot commands that will be used in future labs. For our reference, the commands <code class="inline-code">PING</code> and <code class="inline-code">SEND_TWO_INTS</code> were already implemented in the sample code.</p>
+                    <pre><code class="language-py"># From ble_python/cmd_types.py
+class CMD(Enum):
+    PING = 0
+    SEND_TWO_INTS = 1
+    SEND_THREE_FLOATS = 2
+    ECHO = 3
+    DANCE = 4
+    SET_VEL = 5</code></pre>
+
+                    <h4 class="section-header">Task 1</h4>
+                    <p class="section-text">The first task involved implementing the <code class="inline-code">ECHO</code> command, which sends a piece of string from the computer to the Artemis. The Artemis acknowledges by responding with an enhanced text containing the original string. As shown in the example below, if we send an <code class="inline-code">ECHO</code> with “BIG RED”, the robot responds with “Robot says -> BIG RED”.</p>
+                    <p class="section-text">On the Python side, this only includes sending the <code class="inline-code">ECHO</code> and waiting to receive a string. </p>
+                    <pre><code class="language-py"># Python code in demo.ipynb
+ble.send_command(CMD.ECHO, "BIG RED")
+
+# Expected to receive: "Robot says -> BIG RED"
+s = ble.receive_string(ble.uuid['RX_STRING'])
+LOG.info(s)</code></pre>
+                    <figure><img src="images/lab2/task1-jupyter.png" width="90%"><figcaption>Figure: Task 1 output on Jupyter Lab.</figcaption></figure>
+                    <p class="section-text">In the Artemis code, I updated the case statement for the <code class="inline-code">ECHO</code> command to read the accompanying text, append “Robot says ->”, and transmit it back to the sender.</p>
+                    <pre><code class="language-ino">/* Artemis code in ble_arduino.ino */
+case ECHO:
+    char char_arr[MAX_MSG_SIZE];
+
+    // Extract the next value from the command string as a character array
+    success = robot_cmd.get_next_value(char_arr);
+    if (!success)
+        return;
+
+    /*
+     * Adds the prefix "Robot says ->" and sends it back to the computer
+     */
+    tx_estring_value.clear();
+    tx_estring_value.append("Arty says -> ");
+    tx_estring_value.append(char_arr);
+    tx_characteristic_string.writeValue(tx_estring_value.c_str());
+
+    Serial.print("Echoing: ");
+    Serial.println(tx_estring_value.c_str());
+                
+    break;</code></pre>
+                    <figure><img src="images/lab2/task1-artemis.png" width="90%"><figcaption>Figure: Task 1 output on Arduino Serial Monitor.</figcaption></figure>
+
+                    <h4 class="section-header">Task 2</h4>
+                    <p class="section-text">Next, we had to implement the command <code class="inline-code">SEND_THREE_FLOATS</code>, which is very similar to the already implemented <code class="inline-code">SEND_TWO_INTS</code> command. The robot receives a string of the form “2:3.2|45.6|24.35”, from which, it extracts the three floats 3.2, 45.6, and 24.35. </p>
+                    <pre><code class="language-py"># Python code in demo.ipynb
+ble.send_command(CMD.SEND_THREE_FLOATS, "42.0|0.05|16.2")</code></pre>
+                    <pre><code class="language-ino">/* Artemis code in ble_arduino.ino */
+case SEND_THREE_FLOATS:
+    float float_a, float_b, float_c;
+
+    // Extract the next value from the command string as an integer
+    success = robot_cmd.get_next_value(float_a);
+    if (!success)
+        return;
+
+    // Extract the next value from the command string as an integer
+    success = robot_cmd.get_next_value(float_b);
+    if (!success)
+        return;
+
+    // Extract the next value from the command string as an integer
+    success = robot_cmd.get_next_value(float_c);
+    if (!success)
+        return;
+
+    Serial.print("Three floats: ");
+    Serial.print(float_a);
+    Serial.print(", ");
+    Serial.print(float_b);
+    Serial.print(", ");
+    Serial.println(float_c);
+
+    break;</code></pre>
+                    <figure><img src="images/lab2/task2-artemis.png" width="90%"><figcaption>Figure: Task 2 output on Arduino Serial Monitor.</figcaption></figure>
+
+                    <h4 class="section-header">Task 3</h4>
+                    <p class="section-text">In the third task, we set up a notification handler in the Python notebook that automatically reads and updates a global float variable whenever the computer receives a float value from the Artemis. This involved using a callback function that was linked to the BLE modules <code class="inline-code">start_notify()</code> function to be called every time a value is received on the <code class="inline-code">RX_FLOAT</code> UUID. As shown in the definition of the callback function below, we use the <code class="inline-code">bytearray_to_float</code> to convert the received data into a float value and store it into a global variable. While testing this, the computer successively receives a series of floats at 0.5 increments, which has already been configured in the sample code on the Artemis side.</p>
+                    <pre><code class="language-py"># Python code in demo.ipynb
+# Global variable to store the float characteristic
+float_characteristic = 0.0
+
+# Callback function to automatically receive the float value 
+def float_receive_cb(uuid, float_value):
+    global float_characteristic
+    float_characteristic = ble.bytearray_to_float(float_value)
+    LOG.info("Received new float value from Arty: " + str(float_characteristic))  
+
+# Start notification period for 10s in which the computer continuously receives floats from Artemis
+ble.start_notify(ble.uuid['RX_FLOAT'], float_receive_cb)
+time.sleep(7)
+ble.stop_notify(ble.uuid['RX_FLOAT'])
+                    </code></pre>
+                    <figure><img src="images/lab2/task3-jupyter.png" width="90%"><figcaption>Figure: Task 3 output on Jupyter lab.</figcaption></figure>
+
+                    <h4 class="section-header">Task 4</h4>
+                    <p class="section-text">On the Artemis, the <code class="inline-code"> float</code> datatype is defined as a fixed length datatype of 4 bytes. Such a float can range from -3.4E38 to 3.4E38. If the same float is converted to a string, however, then the string will include a separate character (1 byte) for each of the digits in the rational number, along with the ending <code class="inline-code">‘/0’</code> character. Therefore, any float can range from a few bytes to tens of bytes depending on the precision of the float.</p>
+                    <p class="section-text">In our system, we are concerned with transmitting these float values from the Artemis to the computer in Python. Depending on the datarate of the Bluetooth connection, sending a float as a string can lead to variable, slower latency. Moreover, since the Artemis BLE defines the max characteristic size to be 150 bytes, sending a very “long” float string can present more problems.</p>
+                </div>
+            </div>
+        
+        </div>
+
+        <footer class="footer mt-auto py-3">
+            <div class="container">
+                <h5><a href="index.html">< home</a> | <a href="https://github.com/kr397/ece4960-labs/tree/main/Lab2">code ></a></h5>
+                <p><a href="mailto:kr397@cornell.edu">KR397[AT]CORNELL[DOT]EDU</a></p>
+            </div>
+        </footer>  
+        
+        <script src="prism.js"></script>
+		<script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.min.js" integrity="sha384-w1Q4orYjBQndcko6MimVbzY0tgp4pWB4lZ7lr30WKz0vr/aWKhXdBNmNb5D92v7s" crossorigin="anonymous"></script>
+    </body>
+    
+</html>

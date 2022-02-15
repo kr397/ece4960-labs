@@ -114,6 +114,14 @@ figure {
     text-align: center;
 }
 
+figcaption {
+    font-family: 'Nunito', sans-serif;
+}
+
+.inline-code {
+    background-color: #F5F2F0 !important;
+}
+
 .footer {
     position: static;
     left: 0;
