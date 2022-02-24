@@ -48,7 +48,7 @@
         <div class="container-fluid projects">
             <div class="row align-items-center">
                 <div class="col-lg-12 col-md-12 col-sm-12">
-                    <h2 class="section-title">LAB 2<br>TOF and IMU</h2>
+                    <h2 class="section-title">LAB 3<br>TOF and IMU</h2>
                     <p class="section-text">In this lab, we set up and tested the Artemis with two types of sensors that we will be using on the robot: two Time-of-Flight distance sensors and an Inertial Measurement Unit. The first part of the lab involved connecting these sensors to the appropriate pins of the Artemis. Both types of sensors communicate over the I2C protocol and could be connected in a daisy-chain fashion to the Qwiic connector on the Artemis board. We also had to consider the placement of all these components inside the robot to render their order in the daisy chain, and decide the length of wires required. My final hardware circuit is shown below.</p>
 
                     <figure><img src="images/lab3/circuit.jpg" width="60%"><figcaption>Figure: Circuit with I2C daisy chain such that Artemis --> IMU --> TOF 1 --> TOF2. The <code class="inline-code">XSHUT</code> pin of TOF 2 (green) wires back to a digital pin on the Artemis.</figcaption></figure>
