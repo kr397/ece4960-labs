@@ -77,17 +77,8 @@ void handle_command() {
     // Handle the command type accordingly
     switch (cmd_type) {
         /*
-            * Stop the motor 
-            */
-        case STOP:
-            Serial.println("[COMMAND] Stop");
-
-            robot.fast_stop();
-            break;
-
-        /*
-            * Move the robot forward for given number of milliseconds
-            */
+        * Move the robot forward for given number of milliseconds
+        */
         case MOVE_FORWARD:
             int spd_; 
 
@@ -99,7 +90,7 @@ void handle_command() {
             Serial.print("[COMMAND] Move forward by: ");
             Serial.println(spd_);
 
-            // Move the robot for given seconds
+            // Move the robot for 1 second
             robot.move_forward(spd_);
             delay(1000);
             robot.slow_stop();
@@ -109,8 +100,8 @@ void handle_command() {
 // ...
 // More cases for different commands</code></pre>
 
-                    <pre><code class="language-python">// cmd_types.py
-// Bluetooth command types 
+                    <pre><code class="language-python"># cmd_types.py
+# Bluetooth command types 
 
 class CMD(Enum):
     STOP = 0            # ble.send_command(CMD.STOP, "") -- Stops the robot
@@ -124,141 +115,338 @@ class CMD(Enum):
     SET_SPEEDS = 8      # ble.send_command(CMD.SET_SPEEDS, "120|160") -- Set minimum and maximum speed for the robot
     SET_POINT = 9       # ble.send_command(CMD.SET_POINT, "180.0") -- Setpoint for PID</code></pre>
 
-                    <figure><img src="images/lab5/circuit.png" width="60%"><figcaption>Figure: Circuit diagram with Artemis and motor drivers.</figcaption></figure>
+
+                    <pre><code class="language-python"># lab6.ipynb 
+# Bluetooth setup on Jupyter notebook to send commands and get data from Artemis 
+
+ble = get_ble_controller()
+ble.connect()
+
+ble.send_command(CMD.PERFORM, "")
+
+def float_receive_cb(uuid, float_value):
+    global debug_data
+    global data_length
+    global flag
+    if flag == 0: 
+        data_length = int(ble.bytearray_to_float(float_value))
+        print(f'Expected size: {data_length}')
+        flag = 1
+    else:
+        debug_data.append(ble.bytearray_to_float(float_value))
+        flag = flag + 1
+
+async def get_data(code):
+    global debug_data
+    debug_data = []
+    
+    ble.start_notify(ble.uuid['RX_FLOAT'], float_receive_cb)
+    ble.send_command(CMD.GET_DATA, code)
+    await asyncio.sleep(120)
+    ble.stop_notify(ble.uuid['RX_FLOAT'])
+
+asyncio.run(get_data("0"))</code></pre><br>
 
                     <p class="section-text">To control the motors on the robot with varying PWM for different speeds, I created a handler class <code class=”inline-code”>RobotControl</code> shown below. This consisted of all the necessary information about the hardware connections and contained functions to move the robot forward/backward, right/left, and stop with a given speed. </p>
 
-                    <pre><code class="language-ino">// Code for outputting PWM from the Artemis to control the motor driver to run in one direction
+                    <pre><code class="language-ino">// RobotControl.h
 
-int motorA_in1 = 11;
-int motorA_in2 = 12;
+/*
+* Class to control the robot by manipulating the motors 
+*/
+class RobotControl
+{
+    public: 
+    /**
+    * Default constructor
+    * Sets up all the motor driver pins as output
+    */ 
+    RobotControl()  {}
 
-void setup() {
-    pinMode(motorA_in1, OUTPUT);
-    pinMode(motorA_in2, OUTPUT);
-}
+    /** 
+    * Function to move the robot forward 
+    * 
+    * @param speed integer variable to specify the speed of motor movement (PWM duty cycle)
+    */
+    void move_forward(int speed)  {}
 
-void loop() {
-    int curr_speed = 100;
+    /** 
+    * Function to move the robot backward 
+    * 
+    * @param speed integer variable to specify the speed of motor movement (PWM duty cycle)
+    */
+    void move_backward(int speed)  {}
 
-    analogWrite(motorA_in1, curr_speed);
-    analogWrite(motorA_in2, 0);
-}</code></pre><br>
+    /** 
+    * Function to turn the robot right 
+    * 
+    * @param speed integer variable to specify the speed of motor movement (PWM duty cycle)
+    */
+    void turn_right(int speed)  {}
+
+    /** 
+    * Function to turn the robot left 
+    * 
+    * @param speed integer variable to specify the speed of motor movement (PWM duty cycle)
+    */
+    void turn_left(int speed)  {}
+
+    /**
+    * Function to stop the robot instantly
+    */
+    void fast_stop()  {} 
+
+    /**
+    * Function to stop the robot slowly
+    */
+    void slow_stop()  {}
+};</code></pre><br>
 
                     <p class="section-text">Similarly, to interact with the IMU sensor using I2C, I created a <code class=”inline-code”>IMU</code> class to encapsulate the setup of the sensor and obtain its readings to measure the yaw angle (for task B). I used the gyroscope integral method to calculate the yaw and found it to have a linear error in the observed angles, which I fixed with a two-point calibration method. </p>
+                    <pre><code class="language-ino">// IMU.h
+
+/*
+* Class to handle communication with the IMU sensor
+*/
+class IMU
+{
+    private: 
+    // Member variables for angles along X, Y, Z
+    float angle_X;
+    float angle_Y;
+    float angle_Z;
+
+    // Object for sensor 
+    ICM_20948_I2C sensor;
+
+    // Variable to store the previous time readings were updated
+    int last_time;
+
+    public:
+    /**
+    * Default constructor
+    * Initializes all angles to 0.0
+    */
+    IMU()
+    {
+        angle_X = 0.0;
+        angle_Y = 0.0;
+        angle_Z = 0.0; 
+
+        last_time = millis();
+    } 
+
+    /**
+    * Setup and initialize the sensor
+    */
+    void setup()  {
+        // Initialize the sensor 
+        bool initialized = false;
+        while (!initialized)
+        {
+            sensor.begin(Wire, AD0_VAL);
+        
+            Serial.print(F("[IMU] Initialization of the sensor returned: "));
+            Serial.println(sensor.statusString());
+            if (sensor.status != ICM_20948_Stat_Ok)
+            {
+                delay(500);
+            }
+            else
+            {
+                initialized = true;
+            }
+
+            // Set full-scale settings for gyroscope 
+            ICM_20948_fss_t FSS;
+            FSS.g = dps1000;
+
+            sensor.setFullScale(ICM_20948_Internal_Gyr, FSS);
+        }
+    }
+
+    /**
+    * Update the sensor readings
+    * 
+    * @return 1 if successful else 0
+    */
+    int update_sensor()  {
+        int status = 0;
+
+        if (sensor.dataReady())
+        {
+            int dt = millis() - last_time;
+            sensor.getAGMT();
+
+            // Update angle Z (yaw)
+            angle_Z = angle_Z - sensor.gyrZ() * dt * 0.001;
+
+            last_time = millis();
+
+            status = 1;
+            return status;
+        }
+        else 
+            return status;
+    } 
+
+    /**
+    * Return latest yaw value
+    * 
+    * @return angle_Z
+    */
+    inline float get_yaw()  {
+        // Two-point calibration on yaw (angle_Z)
+        float curr_angle_Z = ((angle_Z - YAW_RAW_LOW) * (YAW_REF_HIGH - YAW_REF_LOW) / 
+            (YAW_RAW_HIGH - YAW_RAW_LOW)) + YAW_REF_LOW;
+        
+        return curr_angle_Z;
+    } 
+
+    /**
+    * Reset the sensor angles 
+    */
+    inline void reset_sensor() {
+        angle_Z = 0.0;
+    }
+
+};</code></pre><br>
 
                     <p class="section-text"> Finally, I also created a static array data structure to efficiently store any data (yaw, error, speeds, etc.) and send it to the computer later for logging. </p>
 
                     <h4 class="section-header">PID</h4>
                     <p class="section-text">The PID controller is a common closed-loop control system used in robotics. PID provides the required output to reach a specified setpoint, based on the feedback obtained using a sensor to calculate the error. In the case of task B, the output of the system would be the PWM duty cycle with which the robot turns, while the setpoint and the feedback would be of the yaw angle measured using the gyroscope in the IMU. </p>
                     <p class="section-text">As the name suggests, PID includes proportional, integral, and derivative terms of the measured error, determined by constants <code class=”inline-code”>kp, ki, kd</code>. The sum of these terms produces the next output speed of the motors. Determined experimentally, the robot has a deadband speed below which it doesn’t move on the ground (which changes as the batteries get depleted). For this lab, we also want the robot to move slowly to ensure stability and thus put an upper limit on the speed from the controller. The final motor speed from these limits and the PID output to also account for turning in different directions has been shown below. </p>
+                    <pre><code class="language-ino">// lab6.ino
+//  turnPID() function 
 
+int pid = (int)p + (int)d + (int)i;
 
-                    <figure><img src="images/lab5/robot.jpg" width="60%"><figcaption>Figure: Assembled circuit on the robot</figcaption></figure>
+if (pid > 0)
+{
+    int speed = min_speed + pid;
+    if (speed > max_speed) speed = max_speed;
+
+    robot.turn_right(speed);
+}
+else 
+{
+    int speed = min_speed - pid;
+    if (speed > max_speed) speed = max_speed;
+
+    robot.turn_left(speed);
+}</code></pre><br>
                     
                     <p class="section-text">I started implementing PID on the robot with the P term. With a low value of proportional constant (below 0.1), I found that while the robot turned, it stops at an angle significantly below the target. This steady-state error is expected because the robot with a low P term is unable to overcome the deadband speed. At a high constant, we see that the robot turns and overshoots the target angle, only to turn back and eventually start oscillating around the target with a low amplitude. </p>
+                    <pre><code class="language-ino">// lab6.ino
+// turnPID() Function 
+// Code for P term
+
+float error = target_yaw - yaw_curr;
+
+// Proportional term
+float p = (kp * error);</code></pre><br>
 
                     <p class="section-text">After getting a suitable range of constants for the P term, I added the derivative term. As expected, the D term reduced the speed of the robot even quicker as it approached the target angle, thus reducing the overshoot. Even without a low-pass filter, the derivative gave stable enough values to be added to the controller. </p>
+                    <pre><code class="language-ino">// lab6.ino
+// turnPID() Function 
+// Code for D term 
+
+int dt = millis() - last_time;
+
+float error = target_yaw - yaw_curr;
+
+// Derivative term
+float d = kd * (error - last_error) / (float) dt;
+last_error = error;
+last_time = millis();</code></pre><br>
 
                     <p class="section-text"> After carefully selecting the proportional and derivative gains, I was able to produce the desired response of task B. I tried to also add the integral term, but I was unable to properly account for the extremely high accumulation of the error sum leading to a high output speed. For the complete sequence, I implemented a timed forward movement, followed by the 180° turn and another timed forward movement. In order to detect that the robot had reached its desired angle, I counted its oscillations through the change of sign of error. </p>
+
+                    <pre><code class="language-ino">// lab6.ino 
+// Case PERFORM in command handler 
+
+/* 
+* Perform the task
+*/
+case PERFORM:
+    Serial.println("[COMMAND] Perform");
+
+    // Reset the data structures for yaw and speed 
+    yaw_data.reset_data();
+    speed_data.reset_data();
+
+    // Reset the IMU sensor 
+    imu_sensor.reset_sensor();
+
+    // Move the robot forward for 1 sec 
+    start_time = millis();
+    robot.move_forward(180);
+    // Variable for running average yaw 
+    while(imu_sensor.update_sensor() == 0) delay(20); 
+    yaw_avg = imu_sensor.get_yaw();
+
+    while (millis() < start_time + 1000)
+    {
+        if(imu_sensor.update_sensor())  
+            yaw_data.add_data(imu_sensor.get_yaw());
+        yaw_avg = (yaw_avg + imu_sensor.get_yaw()) / 2;
+    }
+    robot.fast_stop();
+    delay(100);
+
+
+    // Turn 180 degree
+    target_yaw = yaw_avg + setpoint;
+    last_error = setpoint;
+    osc_count = 0;
+    Serial.print("Target yaw: ");
+    Serial.println(target_yaw);
+
+    start_time = millis();
+    last_time = millis();
+    done = 0;
+    while (done == 0 && (millis() - start_time < 2000))
+    {
+        done = turnPID(target_yaw);
+    }
+    robot.fast_stop();
+    delay(100);
+
+    // Move the robot back for 1 sec
+    start_time = millis();
+    robot.move_forward(180);
+    while (millis() < start_time + 1000)
+    {
+        if(imu_sensor.update_sensor())  
+            yaw_data.add_data(imu_sensor.get_yaw());
+        yaw_avg = (yaw_avg + imu_sensor.get_yaw()) / 2;
+    }
+    robot.fast_stop();
+
+    break;</code></pre><br>
 
                     <h4 class="section-header">Demonstration and Results</h4>
                     <p class="section-text">The videos included below show the three trials performed on the robot with the discussed implementation of PID control. The robot seems to be performing the task very well in all the three cases, where it moves forward, turns around quickly, and comes back almost to the same spot. After each video, a plot shows the measured gyroscope angle as the robot moves, and we can see how the angle is stable in the beginning (during the forward motion), then changes to the setpoint while turning, and quickly stabilizes to the new angle while coming back. The PID control parameters and other variables were set to the values shown below.  </p>
 
-                    <pre><code class="language-ino">void loop() {
-    int curr_speed = 100;
-    // Delayed start to allow time for placing the robot
-    delay(5000);
-
-    // Run forward for 2 seconds
-    motor_fwd(motorA_in1, motorA_in2, curr_speed);
-    motor_fwd(motorB_in1, motorB_in2, curr_speed);
-
-    delay(2000);
-
-    motor_stop(motorA_in1, motorA_in2);
-    motor_stop(motorB_in1, motorB_in2);
-
-    // Busy wait 
-    while (1);
-}
-
-void motor_fwd(int in1, int in2, int spd)
-{
-    analogWrite(in1, spd);
-    analogWrite(in2, 0);
-}
-
-void motor_back(int in1, int in2, int spd)
-{
-    analogWrite(in1, 0);
-    analogWrite(in2, spd);
-}
-
-void motor_stop(int in1, int in2)
-{
-    analogWrite(in1, 0);
-    analogWrite(in2, 0);
-}</code></pre>
-
-                    <figure><iframe width="560" height="315" src="https://www.youtube.com/embed/_Z1bJNBrB6s" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></figure>
-
                     <p class="section-text">While tuning the controller and conducting multiple trials, I found that in order to achieve a complete 180° flip, the setpoint  needs to be around 150°. This offset consistently provided the expected result, so I conducted the final trials this offset setpoint. Another observation is that even though the robot turns around completely, it doesn’t retrace its path back to the starting position and instead follows a parallel path to the right. This could be because the robot is not turning on the spot but instead taking a bigger turn radius. I suspect that this can be fixed by calibrating the two motors while turning such that they move with the exact same speed, and I plan to test and fix this before Lab 8. </p>
 
-                    <pre><code class="language-ino">void loop() {
-    int curr_speed = 100;
-    delay(5000);
+                    <figure><iframe width="560" height="315" src="https://www.youtube.com/embed/iQ09KNGOr6s" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    <figcaption>Video: Final Run 1</figcaption></figure>
 
-    // Move forward
-    motor_fwd(motorA_in1, motorA_in2, curr_speed);
-    motor_fwd(motorB_in1, motorB_in2, curr_speed);
-
-    delay(1000);
-
-    motor_stop(motorA_in1, motorA_in2);
-    motor_stop(motorB_in1, motorB_in2);
-
-    delay(500);
-    
-    // Turn left
-    motor_fwd(motorA_in1, motorA_in2, curr_speed);
-    motor_back(motorB_in1, motorB_in2, curr_speed);
-
-    delay(1000);
-
-    // Move forward
-    motor_fwd(motorA_in1, motorA_in2, curr_speed);
-    motor_fwd(motorB_in1, motorB_in2, curr_speed);
-
-    delay(1000);
-
-    motor_stop(motorA_in1, motorA_in2);
-    motor_stop(motorB_in1, motorB_in2);
-
-    delay(500);
-
-    // Turn left 
-    motor_fwd(motorA_in1, motorA_in2, curr_speed);
-    motor_back(motorB_in1, motorB_in2, curr_speed);
-
-    delay(1000);
-
-    // Move forward
-    motor_fwd(motorA_in1, motorA_in2, curr_speed);
-    motor_fwd(motorB_in1, motorB_in2, curr_speed);
-
-    delay(1000);
-
-    motor_stop(motorA_in1, motorA_in2);
-    motor_stop(motorB_in1, motorB_in2);
-
-    // Busy wait 
-    while (1);
-}</code></pre>
-
-                <figure><iframe width="560" height="315" src="https://www.youtube.com/embed/3KJ41SoyTX8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></figure>
-
+                    <figure><img src="images/lab6/run1-plot.png" width="40%" style="border:1px solid #222222"><figcaption>Figure: Yaw angle over Run 1; dotted green line for the target angle.</figcaption></figure>
                     
+                    <figure><iframe width="560" height="315" src="https://www.youtube.com/embed/U9VzADN-GP8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></iframe>
+                    <figcaption>Video: Final Run 2</figcaption></figure>
+
+                    <figure><img src="images/lab6/run2-plot.png" width="40%" style="border: 1px solid #222222"><figcaption>Figure: Yaw angle over Run 2; dotted green line for the target angle.</figcaption></figure>
+
+
+                    <figure><iframe width="560" height="315" src="https://www.youtube.com/embed/5q58syWa8Bc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></iframe>
+                    <figcaption>Video: Final Run 3</figcaption></figure>
+                    
+                    <figure><img src="images/lab6/run3-plot.png" width="40%" style="border: 1px solid #222222"><figcaption>Figure: Yaw angle over Run 3; solid blue line for the target angle.</figcaption></figure>
+                   
                 </div>
             </div>
         
