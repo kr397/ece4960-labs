@@ -49,9 +49,28 @@
             <div class="row align-items-center">
                 <div class="col-lg-12 col-md-12 col-sm-12">
                     <h2 class="section-title">LAB 11<br>Localization (Simulator)</h2>
-                    <p class="section-text">The solution of the lab is posted below, rest of the webpage coming soon!</p>
+                    <p class="section-text">Lab 11 was the first localization lab, which is a focus of the last part of the course. In this lab, we implemented grid localization on a virtual robot in the simulator using the Bayes Filter, while the robot follows a preprogrammed trajectory in grid. This lab helped me learn a lot about using a simulator and about the Bayes filter, which I didn't have any experience with before. The codebase equipped with the simulator, mapper and other things, along with all the information provided in the lab handout and the skeleton Jupyter notebook was extremely helpful in completing this lab, as it reduced our task to simply understanding and implementing the Bayes filter. </p>
 
-                    
+                    <h4 class="section-header">Background</h4>
+                    <p class="section-text">The Bayes Filter, as discussed in class, provides a probabilistic Robot-Environment model based on the belief distribution of the robot calculated with the help of measurements and control data. The filter can be broken down in two main steps, the prediction and the update, which are shown below with the Bayes filter algorithm. In the prediction step, the robot takes its prior belief about its location in the grid, and predicts is current location based on the movement that it went through (motion model). To update its belief, the robot takes a sensor measurement and compares that with the previously taken sensor measurement from every state in the grid to find the likelihood of it being in each state.</p>
+                    <figure>
+                        <img src="images/lab11/bayes_algorithm.png" width="80%">
+                        <figcaption>Figure: Bayes Filter algorithm (adapted from Lecture 17 slides)</figcaption>
+                    </figure>
+
+                    <p class="section-text">The robot state is 3-dimensional and defined by <code class="inline-code">(x, y, angle)</code> which have the following ranges in the state space.</p>
+                    <pre><code class="language-">- x: [-1.6764, +1.9812) meters or [-5.5, 6.5) feet
+- y: [-1.6764, +1.9812) meters or [-5.5, 6.5) feet
+- angle: [-180°, 180°]</code></pre>
+                    <p>In order to practically implement the Bayes filter, we need to discretize the robot state space into grid cells. For these labs, we do so for x and y with the help of 1ft tile markers in the room, and for angles, by splitting into 18 20°-increments, resulting in a discrete grid space of the size <code class="inline-code">(12, 9, 18)</code></p>
+
+
+                    <h4 class="section-header">Prediction Step</h4>
+                    <p class="section-text">For the prediction step, we need to first define the robot motion model. In this lab and the next, the motion model of the robot is described as a Gaussian distribution centered at the motion measured using odometry of the robot. The motion control of the robot is described as a tuple of <code class="inline-code">(rotation_1, translation, rotation_2)</code> which was discussed in Lecture 18. We define a function <code class="inline-code">compute_control()</code> to find this motion control from the previous and current odometry poses.</p>
+                    <figure>
+                        <img src="images/lab11/motion_model.png" width="60%">
+                        <figcaption>Figure: Motion control of the robot</figcaption>
+                    </figure>
                     <pre><code class="language-python">def compute_control(cur_pose, prev_pose):
     """ Given the current and previous odometry poses, this function extracts
     the control information based on the odometry motion model.
@@ -70,19 +89,16 @@
     dir_trans = degrees(atan2(cur_pose[1] - prev_pose[1], cur_pose[0] - prev_pose[0]))
 
     # First rotation
-    delta_rot_1 = dir_trans - prev_pose[2]
-    # Normalize 
-    delta_rot_1 = mapper.normalize_angle(delta_rot_1)
+    delta_rot_1 = mapper.normalize_angle(dir_trans - prev_pose[2])
 
     # Translation distance 
     delta_trans = sqrt((cur_pose[1] - prev_pose[1])**2 + (cur_pose[0] - prev_pose[0])**2)
 
     # Second rotation
-    delta_rot_2 = cur_pose[2] - dir_trans
-    delta_rot_2 = mapper.normalize_angle(delta_rot_2)
+    delta_rot_2 = mapper.normalize_angle(cur_pose[2] - dir_trans)
 
     return delta_rot_1, delta_trans, delta_rot_2</code></pre><br>
-
+                    <p class="section-text">The <code class="inline-code">odom_motion_model()</code> function calculates the likelihood of movement from one pose to another given a control <code class="inline-code">p(x'|x, u)</code>, based ont the Gaussian distribution of each of the control variables using joint probability of the independent variables.</p>
                     <pre><code class="language-python">def odom_motion_model(cur_pose, prev_pose, u):
     """ Odometry Motion Model
 
@@ -91,7 +107,6 @@
         prev_pose ([Pose]): Previous Pose
         (rot1, trans, rot2) (float, float, float): A tuple with control data in the format 
                                 format (rot1, trans, rot2) with units (degrees, meters, degrees)
-
 
     Returns:
         prob [float]: Probability p(x'|x, u)
@@ -108,7 +123,8 @@
     # Calculate total probability 
     prob = prob_rot_1 * prob_trans * prob_rot_2
 
-    return prob</code></pre>
+    return prob</code></pre><br>
+                    <p class="section-text">In the prediction step, we calculate <code class="inline-code">bel_bar</code> for every cell in the grid space which is the predicted belief of the robot in each cell based on its prior belief and its movement. Therefore, we iterate over each cell and its belief (previous), find the likelihood of reaching every cell from it after the odometry-described motion (current) and add all of those up to find the predicted belief distribution. Finally, we can normalize the predicted belief <code class="inline-code">bel_bar</code>. As shown in the code snippet of <code class="inline-code">prediction_step()</code>, this results in a nested 6 for-loop structure to computer over every grid cell pair, which can take a huge amount of computation time. To reduce the execution time, I introduced an optimization where the inner current cell nested-loop is only executed if the belief in the previous cell is above the threshold of 0.0005. I determined this threshold as a large value less than the initial belief of 0.0005144 (computed with uniform distribution), which is important in order to not zero-out the distribution. While this change led to reasonable computation time, there can be further optimizations which I will experiment with and include while implementing the Bayes filter on the robot.</p>
 
                     <pre><code class="language-python">def prediction_step(cur_odom, prev_odom):
     """ Prediction step of the Bayes Filter.
@@ -125,7 +141,7 @@
     # Find actual control based on odometry 
     u_act = compute_control(cur_odom, prev_odom)
     
-    # Iterate over the belief of each cell and update that based on the motion model for every cell 
+    # Iterate over the belief of each cell as the prev pose 
     for cx1 in range(mapper.MAX_CELLS_X):
         for cy1 in range(mapper.MAX_CELLS_Y):
             for ca1 in range(mapper.MAX_CELLS_A):
@@ -133,21 +149,24 @@
                 # Only move forward with cells who have a significant belief (> 0.0005)
                 if loc.bel[cx1][cy1][ca1] > 0.0005:
                 
-                    # Sum motion model probability over every cell 
+                    # Sum motion model probability over every cell as the curr pose after u_act 
                     for cx2 in range(mapper.MAX_CELLS_X):
                         for cy2 in range(mapper.MAX_CELLS_Y):
                             for ca2 in range(mapper.MAX_CELLS_A):
-                                # Probability of robot moving from (cx1, cy1, ca1) to (cx2, cy2, ca2) 
-                                # after the motion u_act                 
+                                # Prob of robot moving from (cx1, cy1, ca1) to (cx2, cy2, ca2) 
                                 odom_model = odom_motion_model(mapper.from_map(cx2, cy2, ca2), \ 
                                     mapper.from_map(cx2, cy2, ca2), u_act)
 
-                                # Add the probability to bel_bar based on previous belief
+                                # Add prob to bel_bar of this cell based on belief in prev cell
                                 loc.bel_bar[cx2][cy2][ca2] = loc.bel_bar[cx2][cy2][ca2] + \ 
                                     (odom_model * loc.bel[cx1][cy1][ca1])
                 
     # Normalize bel_bar 
-    loc.bel_bar = loc.bel_bar / np.sum(loc.bel_bar)</code></pre>
+    loc.bel_bar = loc.bel_bar / np.sum(loc.bel_bar)</code></pre><br>
+
+                    <h4 class="section-header">Update Step</h4>
+                    <p class="section-text">The sensor model is also described as Gaussian distribution using the Beam model for sensors. We only account for the correct range measurements to simplify the model. At every time step, the robot rotates in-place to collect 18 sensor readings placed at 20° angle increments to cover the range [-180°, 180°).</p>
+                    
 
                     <pre><code class="language-python">def sensor_model(obs):
     """ This is the equivalent of p(z|x).
