@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+ 
+        <title>ECE 4960 Lab 11 - Krithik Ranjan</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+        <link rel="stylesheet" type="text/css" href="main.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@200;300;400;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+        <link href="https://fonts.googleapis.com/css2?family=Major+Mono+Display&display=swap" rel="stylesheet">
+
+        <link href="prism.css" rel="stylesheet" />
+
+        <!--
+        <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+        <link rel="icon" href="favicon.ico" type="image/x-icon">
+        -->
+
+    </head>
+    <body>
+        <!--
+        <nav class="navbar navbar-expand-md">
+            
+            <a class="navbar-brand">ECE 4960</a>
+            <button class="navbar-toggler navbar-dark" type="button" data-toggle="collapse" data-target="#main-navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="main-navigation">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">COURSE WEBSITE</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">CODE REPO</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        -->
+
+        <div class="container-fluid projects">
+            <div class="row align-items-center">
+                <div class="col-lg-12 col-md-12 col-sm-12">
+                    <h2 class="section-title">LAB 11<br>Localization (Simulator)</h2>
+                    <p class="section-text">The solution of the lab is posted below, rest of the webpage coming soon!</p>
+
+                    
+                    <pre><code class="language-python">def compute_control(cur_pose, prev_pose):
+    """ Given the current and previous odometry poses, this function extracts
+    the control information based on the odometry motion model.
+
+    Args:
+        cur_pose  ([Pose]): Current Pose
+        prev_pose ([Pose]): Previous Pose 
+
+    Returns:
+        [delta_rot_1]: Rotation 1  (degrees)
+        [delta_trans]: Translation (meters)
+        [delta_rot_2]: Rotation 2  (degrees)
+    """
+
+    # Calculate the direction of cur_pose from prev_pose 
+    dir_trans = degrees(atan2(cur_pose[1] - prev_pose[1], cur_pose[0] - prev_pose[0]))
+
+    # First rotation
+    delta_rot_1 = dir_trans - prev_pose[2]
+    # Normalize 
+    delta_rot_1 = mapper.normalize_angle(delta_rot_1)
+
+    # Translation distance 
+    delta_trans = sqrt((cur_pose[1] - prev_pose[1])**2 + (cur_pose[0] - prev_pose[0])**2)
+
+    # Second rotation
+    delta_rot_2 = cur_pose[2] - dir_trans
+    delta_rot_2 = mapper.normalize_angle(delta_rot_2)
+
+    return delta_rot_1, delta_trans, delta_rot_2</code></pre><br>
+
+                    <pre><code class="language-python">def odom_motion_model(cur_pose, prev_pose, u):
+    """ Odometry Motion Model
+
+    Args:
+        cur_pose  ([Pose]): Current Pose
+        prev_pose ([Pose]): Previous Pose
+        (rot1, trans, rot2) (float, float, float): A tuple with control data in the format 
+                                format (rot1, trans, rot2) with units (degrees, meters, degrees)
+
+
+    Returns:
+        prob [float]: Probability p(x'|x, u)
+    """
+    # Find the control for the given pair of poses 
+    u_calc = compute_control(cur_pose, prev_pose)
+    
+    # Calculate probabilities of different control motions as a gaussian distribution centered 
+    # at the input control u
+    prob_rot_1 = loc.gaussian(u_calc[0], u[0], loc.odom_rot_sigma)
+    prob_trans = loc.gaussian(u_calc[1], u[1], loc.odom_trans_sigma)
+    prob_rot_2 = loc.gaussian(u_calc[2], u[2], loc.odom_rot_sigma)
+    
+    # Calculate total probability 
+    prob = prob_rot_1 * prob_trans * prob_rot_2
+
+    return prob</code></pre>
+
+                    <pre><code class="language-python">def prediction_step(cur_odom, prev_odom):
+    """ Prediction step of the Bayes Filter.
+    Update the probabilities in loc.bel_bar based on loc.bel from the previous time step and the 
+    odometry motion model.
+
+    Args:
+        cur_odom  ([Pose]): Current Pose
+        prev_odom ([Pose]): Previous Pose
+    """
+    # Initialize bel_bar as zeros 
+    loc.bel_bar = np.zeros((mapper.MAX_CELLS_X, mapper.MAX_CELLS_Y, mapper.MAX_CELLS_A))
+    
+    # Find actual control based on odometry 
+    u_act = compute_control(cur_odom, prev_odom)
+    
+    # Iterate over the belief of each cell and update that based on the motion model for every cell 
+    for cx1 in range(mapper.MAX_CELLS_X):
+        for cy1 in range(mapper.MAX_CELLS_Y):
+            for ca1 in range(mapper.MAX_CELLS_A):
+                
+                # Only move forward with cells who have a significant belief (> 0.0005)
+                if loc.bel[cx1][cy1][ca1] > 0.0005:
+                
+                    # Sum motion model probability over every cell 
+                    for cx2 in range(mapper.MAX_CELLS_X):
+                        for cy2 in range(mapper.MAX_CELLS_Y):
+                            for ca2 in range(mapper.MAX_CELLS_A):
+                                # Probability of robot moving from (cx1, cy1, ca1) to (cx2, cy2, ca2) 
+                                # after the motion u_act                 
+                                odom_model = odom_motion_model(mapper.from_map(cx2, cy2, ca2), \ 
+                                    mapper.from_map(cx2, cy2, ca2), u_act)
+
+                                # Add the probability to bel_bar based on previous belief
+                                loc.bel_bar[cx2][cy2][ca2] = loc.bel_bar[cx2][cy2][ca2] + \ 
+                                    (odom_model * loc.bel[cx1][cy1][ca1])
+                
+    # Normalize bel_bar 
+    loc.bel_bar = loc.bel_bar / np.sum(loc.bel_bar)</code></pre>
+
+                    <pre><code class="language-python">def sensor_model(obs):
+    """ This is the equivalent of p(z|x).
+
+
+    Args:
+        obs ([ndarray]): A 1D array consisting of the true observations for a specific robot pose 
+            in the map 
+
+    Returns:
+        [ndarray]: Returns a 1D array of size 18 (=loc.OBS_PER_CELL) with the likelihoods of each 
+            individual sensor measurement
+    """
+    # Initialize array 
+    prob_array = np.zeros(mapper.OBS_PER_CELL)
+    
+    # For a given pose, the probability of the obtained sensor measurement based on true observations 
+    for i in range(mapper.OBS_PER_CELL):
+        prob_array[i] = loc.gaussian(loc.obs_range_data[i], obs[i], loc.sensor_sigma)
+
+    return prob_array</code></pre>
+
+                    <pre><code class="language-python">def update_step():
+    """ Update step of the Bayes Filter.
+    Update the probabilities in loc.bel based on loc.bel_bar and the sensor model.
+    """
+    # Iterate over each cell to update its belief
+    for cx in range(mapper.MAX_CELLS_X):
+        for cy in range(mapper.MAX_CELLS_Y):
+            for ca in range(mapper.MAX_CELLS_A):
+                # The sensor model at this cell and probability of being same as observations
+                sens_model = np.prod(sensor_model(mapper.get_views(cx, cy, ca)))
+                
+                # Update belief based on sensor model and bel_bar 
+                loc.bel[cx][cy][ca] = sens_model * loc.bel_bar[cx][cy][ca]
+    
+    # Normalized the belief distribution 
+    loc.bel = loc.bel / np.sum(loc.bel)</code></pre>
+
+                <!--
+                    <figure><iframe width="560" height="315" src="https://www.youtube.com/embed/P6zWHMy9_Xg" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </figure>
+                -->
+ 
+                </div>
+            </div>
+        
+        </div>
+
+        <footer class="footer mt-auto py-3">
+            <div class="container">
+                <h5><a href="index.html">< home</a> | <a href="https://github.com/kr397/ece4960-labs/tree/main/Lab2">code ></a></h5>
+                <p><a href="mailto:kr397@cornell.edu">KR397[AT]CORNELL[DOT]EDU</a></p>
+            </div>
+        </footer>  
+        
+        <script src="prism.js"></script>
+		<script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.min.js" integrity="sha384-w1Q4orYjBQndcko6MimVbzY0tgp4pWB4lZ7lr30WKz0vr/aWKhXdBNmNb5D92v7s" crossorigin="anonymous"></script>
+    </body>
+    
+</html>
