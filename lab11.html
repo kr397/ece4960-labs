@@ -124,7 +124,7 @@
     prob = prob_rot_1 * prob_trans * prob_rot_2
 
     return prob</code></pre><br>
-                    <p class="section-text">In the prediction step, we calculate <code class="inline-code">bel_bar</code> for every cell in the grid space which is the predicted belief of the robot in each cell based on its prior belief and its movement. Therefore, we iterate over each cell and its belief (previous), find the likelihood of reaching every cell from it after the odometry-described motion (current) and add all of those up to find the predicted belief distribution. Finally, we can normalize the predicted belief <code class="inline-code">bel_bar</code>. As shown in the code snippet of <code class="inline-code">prediction_step()</code>, this results in a nested 6 for-loop structure to computer over every grid cell pair, which can take a huge amount of computation time. To reduce the execution time, I introduced an optimization where the inner current cell nested-loop is only executed if the belief in the previous cell is above the threshold of 0.0005. I determined this threshold as a large value less than the initial belief of 0.0005144 (computed with uniform distribution), which is important in order to not zero-out the distribution. While this change led to reasonable computation time, there can be further optimizations which I will experiment with and include while implementing the Bayes filter on the robot.</p>
+                    <p class="section-text">In the prediction step, we calculate <code class="inline-code">bel_bar</code> for every cell in the grid space which is the predicted belief of the robot in each cell based on its prior belief and its movement. Therefore, we iterate over each cell and its belief (previous), find the likelihood of reaching every cell from it after the odometry-described motion (current) and add all of those up to find the predicted belief distribution. Finally, we can normalize the predicted belief <code class="inline-code">bel_bar</code>. As shown in the code snippet of <code class="inline-code">prediction_step()</code>, this results in a nested 6 for-loop structure to computer over every grid cell pair, which can take a huge amount of computation time. To reduce the execution time, I introduced an optimization where the inner current cell nested-loop is only executed if the belief in the previous cell is above the threshold of 0.0005. I determined this threshold as a large value less than the initial belief of 0.0005144 (computed with uniform distribution), which is important in order to not zero-out the distribution. While this change led to reasonable computation time with the simulator, there can be further optimizations which I will experiment with and include while implementing the Bayes filter on the robot.</p>
 
                     <pre><code class="language-python">def prediction_step(cur_odom, prev_odom):
     """ Prediction step of the Bayes Filter.
@@ -155,22 +155,17 @@
                             for ca2 in range(mapper.MAX_CELLS_A):
                                 # Prob of robot moving from (cx1, cy1, ca1) to (cx2, cy2, ca2) 
                                 odom_model = odom_motion_model(mapper.from_map(cx2, cy2, ca2), \ 
-                                    mapper.from_map(cx2, cy2, ca2), u_act)
+                                    mapper.from_map(cx1, cy1, ca1), u_act)
 
                                 # Add prob to bel_bar of this cell based on belief in prev cell
                                 loc.bel_bar[cx2][cy2][ca2] = loc.bel_bar[cx2][cy2][ca2] + \ 
-                                    (odom_model * loc.bel[cx1][cy1][ca1])
-                
-    # Normalize bel_bar 
-    loc.bel_bar = loc.bel_bar / np.sum(loc.bel_bar)</code></pre><br>
+                                    (odom_model * loc.bel[cx1][cy1][ca1])</code></pre><br>
 
                     <h4 class="section-header">Update Step</h4>
-                    <p class="section-text">The sensor model is also described as Gaussian distribution using the Beam model for sensors. We only account for the correct range measurements to simplify the model. At every time step, the robot rotates in-place to collect 18 sensor readings placed at 20° angle increments to cover the range [-180°, 180°).</p>
-                    
+                    <p class="section-text">Once we have the predicted belief for every grid cell based on the motion model, we can verify it using sensor measurements. The sensor model is also described as Gaussian distribution using the Beam model for sensors. We only account for the correct range measurements to simplify the model. At every time step, the robot rotates in-place to collect 18 sensor readings placed at 20° angle increments to cover the range [-180°, 180°), which are then compared with the precached sensor measurements from each cell in the grid to update the belief of that cell. The <code class="inline-code">sensor_model()</code> computes the similarity of the sensor measurement along each of the 18 angle increments with a given set of observations, computed using a Gaussian variable as <code class="inline-code">p(z|x)</code>.</p>
 
                     <pre><code class="language-python">def sensor_model(obs):
     """ This is the equivalent of p(z|x).
-
 
     Args:
         obs ([ndarray]): A 1D array consisting of the true observations for a specific robot pose 
@@ -205,6 +200,18 @@
     
     # Normalized the belief distribution 
     loc.bel = loc.bel / np.sum(loc.bel)</code></pre>
+
+                <h4 class="section-header">Results</h4>
+
+                <figure>
+                    <img src="images/lab11/run1.png" width="45%">
+                    <img src="images/lab11/run2.png" width="45%">
+                </figure>
+                <figure>
+                    <img src="images/lab11/run3.png" width="45%">
+                    <img src="images/lab11/run4.png" width="45%">
+                    <figcaption>Figure: 4 trials of Bayes filter localization on the simulator with three trajectories: ground truth (green), robot's belief (blue), and odometry-based (red)</figcaption>
+                </figure>
 
                 <!--
                     <figure><iframe width="560" height="315" src="https://www.youtube.com/embed/P6zWHMy9_Xg" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
