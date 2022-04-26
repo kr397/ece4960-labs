@@ -162,7 +162,7 @@
                                     (odom_model * loc.bel[cx1][cy1][ca1])</code></pre><br>
 
                     <h4 class="section-header">Update Step</h4>
-                    <p class="section-text">Once we have the predicted belief for every grid cell based on the motion model, we can verify it using sensor measurements. The sensor model is also described as Gaussian distribution using the Beam model for sensors. We only account for the correct range measurements to simplify the model. At every time step, the robot rotates in-place to collect 18 sensor readings placed at 20° angle increments to cover the range [-180°, 180°), which are then compared with the precached sensor measurements from each cell in the grid to update the belief of that cell. The <code class="inline-code">sensor_model()</code> computes the similarity of the sensor measurement along each of the 18 angle increments with a given set of observations, computed using a Gaussian variable as <code class="inline-code">p(z|x)</code>.</p>
+                    <p class="section-text">Once we have the predicted belief for every grid cell based on the motion model, we can verify it using sensor measurements. The sensor model is also described as Gaussian distribution using the Beam model for sensors. We only account for the correct range measurements to simplify the model. At every time step, the robot rotates in-place to collect 18 sensor readings placed at 20° angle increments to cover the range [-180°, 180°), which are then compared with the precached sensor measurements from each cell in the grid to update the belief of that cell. The <code class="inline-code">sensor_model()</code> computes the similarity of the current sensor measurement along each of the 18 angle increments with a given set of observations, computed using a Gaussian variable as <code class="inline-code">p(z|x)</code>.</p>
 
                     <pre><code class="language-python">def sensor_model(obs):
     """ This is the equivalent of p(z|x).
@@ -184,6 +184,8 @@
 
     return prob_array</code></pre>
 
+                    <p class="section-text">In order to update the belief in each grid cell, we use this sensor model along with the predicted belief of that cell. The <code class="inline-code">update_step()</code> function iterates over all the grid cells to perform this computation in which the sensor model is computed as a joint probability over the 18 sensor measurements by comparing the precached sensor data for that cell and the latest sensor measurements, which is then multiplied by the <code class="inline-code">bel_bar</code> of that cell from the prediction step. Finally, the belief distribution is normalized to make it an appropriate probability distribution.</p>
+
                     <pre><code class="language-python">def update_step():
     """ Update step of the Bayes Filter.
     Update the probabilities in loc.bel based on loc.bel_bar and the sensor model.
@@ -202,6 +204,7 @@
     loc.bel = loc.bel / np.sum(loc.bel)</code></pre>
 
                 <h4 class="section-header">Results</h4>
+                <p class="section-text">After implementing all the necessary functions for the Bayes filter, we tested it over the trajectory provided in the codebase. The trajectory moves the robot over a set of control motions, and performs the Bayes prediction and update after each step to localize in the grid. The interface also simultaneously plots the actual movement of the robot, its the result of its localization (belief), and also the location of the robot calculated using odometry. From the plots of the four trials shown below, we can see that the results of the localization are mostly appropriate, with the robot's belief being fairly close to its actual location. Even in the statistics for one of the trials we can see small amount of error and the robot's high confidence in its belief (almost always close to 1). </p>
 
                 <figure>
                     <img src="images/lab11/run1.png" width="45%">
@@ -211,6 +214,11 @@
                     <img src="images/lab11/run3.png" width="45%">
                     <img src="images/lab11/run4.png" width="45%">
                     <figcaption>Figure: 4 trials of Bayes filter localization on the simulator with three trajectories: ground truth (green), robot's belief (blue), and odometry-based (red)</figcaption>
+                </figure>
+
+                <figure>
+                    <img src="images/lab11/stats1.png" width="60%">
+                    <img src="images/lab11/stats2.png" width="60%">
                 </figure>
 
                 <!--
