@@ -97,7 +97,7 @@
     # Second rotation
     delta_rot_2 = mapper.normalize_angle(cur_pose[2] - dir_trans)
 
-    return delta_rot_1, delta_trans, delta_rot_2</code></pre><br>
+    return delta_rot_1, delta_trans, delta_rot_2</code></pre>
                     <p class="section-text">The <code class="inline-code">odom_motion_model()</code> function calculates the likelihood of movement from one pose to another given a control <code class="inline-code">p(x'|x, u)</code>, based ont the Gaussian distribution of each of the control variables using joint probability of the independent variables.</p>
                     <pre><code class="language-python">def odom_motion_model(cur_pose, prev_pose, u):
     """ Odometry Motion Model
@@ -123,7 +123,7 @@
     # Calculate total probability 
     prob = prob_rot_1 * prob_trans * prob_rot_2
 
-    return prob</code></pre><br>
+    return prob</code></pre>
                     <p class="section-text">In the prediction step, we calculate <code class="inline-code">bel_bar</code> for every cell in the grid space which is the predicted belief of the robot in each cell based on its prior belief and its movement. Therefore, we iterate over each cell and its belief (previous), find the likelihood of reaching every cell from it after the odometry-described motion (current) and add all of those up to find the predicted belief distribution. Finally, we can normalize the predicted belief <code class="inline-code">bel_bar</code>. As shown in the code snippet of <code class="inline-code">prediction_step()</code>, this results in a nested 6 for-loop structure to computer over every grid cell pair, which can take a huge amount of computation time. To reduce the execution time, I introduced an optimization where the inner current cell nested-loop is only executed if the belief in the previous cell is above the threshold of 0.0005. I determined this threshold as a large value less than the initial belief of 0.0005144 (computed with uniform distribution), which is important in order to not zero-out the distribution. While this change led to reasonable computation time with the simulator, there can be further optimizations which I will experiment with and include while implementing the Bayes filter on the robot.</p>
 
                     <pre><code class="language-python">def prediction_step(cur_odom, prev_odom):
@@ -201,10 +201,10 @@
                 loc.bel[cx][cy][ca] = sens_model * loc.bel_bar[cx][cy][ca]
     
     # Normalized the belief distribution 
-    loc.bel = loc.bel / np.sum(loc.bel)</code></pre>
+    loc.bel = loc.bel / np.sum(loc.bel)</code></pre><br>
 
                 <h4 class="section-header">Results</h4>
-                <p class="section-text">After implementing all the necessary functions for the Bayes filter, we tested it over the trajectory provided in the codebase. The trajectory moves the robot over a set of control motions, and performs the Bayes prediction and update after each step to localize in the grid. The interface also simultaneously plots the actual movement of the robot, its the result of its localization (belief), and also the location of the robot calculated using odometry. From the plots of the four trials shown below, we can see that the results of the localization are mostly appropriate, with the robot's belief being fairly close to its actual location. Even in the statistics for one of the trials we can see small amount of error and the robot's high confidence in its belief (almost always close to 1). </p>
+                <p class="section-text">After implementing all the necessary functions for the Bayes filter, we tested it over the trajectory provided in the codebase. The trajectory moves the robot over a set of control motions, and performs the Bayes prediction and update after each step to localize in the grid. The interface also simultaneously plots the actual movement of the robot, its the result of its localization (belief), and also the location of the robot calculated using odometry. From the plots of the four trials shown below, we can see that the results of the localization are mostly appropriate, with the robot's belief being fairly close to its actual location.</p> 
 
                 <figure>
                     <img src="images/lab11/run1.png" width="45%">
@@ -216,10 +216,17 @@
                     <figcaption>Figure: 4 trials of Bayes filter localization on the simulator with three trajectories: ground truth (green), robot's belief (blue), and odometry-based (red)</figcaption>
                 </figure>
 
+                <p class="section-text">Even in the statistics for one of the trials we can see small amount of error and the robot's high confidence in its belief (almost always close to 1) which means that the localization is working well. A notable thing is that the <code class="inline-code">POS ERROR</code> for the angle was piling up to a large value. This is because the ground truth update in the angle is not normalized, and keeps getting increased after each run. After several trials, I found that the localization during a straight path in the trajectory is better than that in the corners, for example the top right and the bottom left corner in the trajectory. I wonder if the cause for this is ambiguity in the robots sensor measurement and the sensor model. </p>
+
                 <figure>
                     <img src="images/lab11/stats1.png" width="60%">
                     <img src="images/lab11/stats2.png" width="60%">
+                    <figcaption>Figure: Statistics log of one trial run on the virtual robot as it moves through the trajectory and localizes using Bayes filter at every step.</figcaption>
                 </figure>
+
+                <p class="section-text">A useful feature to add to this codebase would be a way to visualize the <code class="inline-code">bel</code> and <code class="inline-code">bel_bar</code> probability distributions, similar to those shown in the lectures. For this lab, I was planning to add a 3D heatmap to do so, such that instead of only the highest belief index, we can see the robots belief across all the cells. This would help us monitor the change in robot belief, and also potentially determine the reason behind some of the discrepancies. While I was short on time to do this for lab 11, I plan to implement it in lab 12 for debugging purposes. </p>
+
+                <p class="section-text">Overall, this was a more challenging lab than the previous few in terms of coding, however, not having to run and debug code on the robot was refreshing. I look forward to get back to it in the next lab as we implement the Bayes filter on the robot and try to localize.</p>
 
                 <!--
                     <figure><iframe width="560" height="315" src="https://www.youtube.com/embed/P6zWHMy9_Xg" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
