@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+ 
+        <title>ECE 4960 Lab 13 - Krithik Ranjan</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+        <link rel="stylesheet" type="text/css" href="main.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@200;300;400;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+        <link href="https://fonts.googleapis.com/css2?family=Major+Mono+Display&display=swap" rel="stylesheet">
+
+        <link href="prism.css" rel="stylesheet" />
+
+        <!--
+        <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+        <link rel="icon" href="favicon.ico" type="image/x-icon">
+        -->
+
+    </head>
+    <body>
+        <!--
+        <nav class="navbar navbar-expand-md">
+            
+            <a class="navbar-brand">ECE 4960</a>
+            <button class="navbar-toggler navbar-dark" type="button" data-toggle="collapse" data-target="#main-navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="main-navigation">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">COURSE WEBSITE</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">CODE REPO</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        -->
+
+        <div class="container-fluid projects">
+            <div class="row align-items-center">
+                <div class="col-lg-12 col-md-12 col-sm-12">
+                    <h2 class="section-title">LAB 13<br>Path Planning and Execution</h2>
+                    <p class="section-text">Last lab! This is where all our work on our robots throughout the semester comes to conclusion, as we move the robot over a set of points in the map to complete a path. Here, we use the closed-loop PID control that we implemented in Labs 6-8, along with mapping and localization from Labs 9-12 to perform the given trajectory with the robot. This was a very open-ended lab, which gave us a lot of freedom to figure out how we wanted to solve the assigned problem, and also see the various ways other students thought of doing so. In this lab, I worked with Aryaa Pai (avp34) and Aparajito Saha (as2537) and we did all the brainstorming, implementation, and testing, together. We used my robot hardware and the Jupyter notebooks were run on Aryaa’s and Apu’s computers.  </p>
+                    <p class="section-text">Our approach for executing the path trajectory on the robot had various elements. We used PID for closed-loop control of the robot’s orientation and translation, which were used in conjunction to perform local path-planning with the turn-go procedure. We removed the ending turn from Lab 11’s odometry model because we only needed to follow a set of (x, y) points on the map, without paying attention to the orientation. The robot also localizes in the map using the Bayes filter approach used in Lab 12. Overall, the labor division between the computer and the robot was similar to previous labs, where the robot was limited to performing direct commands from the computer – like moving forward for some distance or turning some angle – and the rest of the path planning and localization was offboarded to the computer. </p>
+                    <pre><code class="language-">- (-4, -3)
+- (-2, -1)
+- (1, -1)
+- (2, -3)
+- (5, -3)
+- (5, -2)
+- (5, 3)
+- (0, 3)
+- (0, 0)</code></pre><br>
+                    <figure>
+                        <img src="images/lab13/path.png" width="80%">
+                        <figcaption>Figure: Trajectory on the map with marked waypoints</figcaption>
+                    </figure>
+
+                    <h4 class="section-header">PID for Orientation and Translation</h4>
+                    <p class="section-text">In order to turn the robot by a certain angle and move it a certain distance, we used closed-loop control with PID. The orientation control code was retained from the previous labs (6, 8, 9, 12), such that the robot turned a certain angle when sent a command through Bluetooth. Unlike the convention of the map with positive angles in the anti-clockwise direction, our robot turns clockwise with positive angles because of the placement of the IMU sensor on the robot. To account for this, we added some mapping functions on the Jupyter side which convert any angle to its counter before sending it to the robot (360° - θ). Another issue that the mapping function solves is the measurement error by the gyroscope, causing the robot to turn greater than the set point. We used two-point calibration to scale down each angle sent using the angle by which the robot turns when it is made to rotate 360°, as shown in the video below.  </p>
+
+                    <figure>
+                        <iframe width="560" height="315" src="https://www.youtube.com/embed/suO21N8s-Qs" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </figure>
+
+                    <p class="section-text">Similar to orientation control, we added PD control to move the robot forward by a certain distance, based on the measurement of the TOF sensor placed in front of the robot. The robot receives the distance to be traveled from a Bluetooth command, which is subtracted from the current TOF measurement to obtain the distance setpoint as the final TOF distance the robot should read. In order to prevent an unexpected setpoint due to rare noisy TOF measurements, the robot takes an average of 10 readings in the beginning for the current distance. We implemented these two closed-loop controls and tested it on the robot through a series of commands as shown below. </p>
+
+                    <figure>
+                        <iframe width="560" height="315" src="https://www.youtube.com/embed/5G2pHJWE9Ds" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </figure>
+
+                    <h4 class="section-header">PID-based Path Following</h4>
+                    <p class="section-text">Once we had orientation and translation control on the robot, we tried to make the robot follow the given trajectory using direct commands (for example, turn 45° and move 3 blocks). Given the accuracy of our closed-loop control, we thought this would be a viable way to complete the trajectory successfully (until it wasn’t). We coded the Jupyter notebook to execute the path on the robot given the list of waypoints and the initial pose of the robot as shown below. </p>
+
+                    <pre><code class="language-python"># Pseudocode for performing trajectory using PID 
+                    
+curr_pose = (-4, -3, 0)
+trajectory = [(-4, -3),(-2, -1),(1, -1),(2, -3),(5, -3),(5, -2),(5, 3),(0, 3),(0, 0)]
+
+ble.send_command(TUNE_PID)
+
+for next_pose in trajectory[1:]:
+    # Calculate rotation required to get to next point and rotate 
+    rot = calc_rot(curr_pose, next_pose)    
+    ble.send_command(TURN_ANGLE)
+
+    # Calculate translation to get to next point and move 
+    trans = calc_trans(curr_pose, next_pose)
+    ble.send_command(MOVE)
+
+    # Update pose 
+    new_angle = normalize(curr_pose[2] + rot)
+    curr_pose = (next_pose, new_angle) </code></pre><br>
+
+                    <p class="section-text">At many points in the trajectory, we realized that the TOF sensor in the front of the robot has to measure a great distance ahead of it as the wall is very far away (for example, at (-4, -3), (-2, -1), (5, -3), (5, 3)). While the sensor in long-distance mode is rated to measure up to 4m, we found that the readings were noisier at larger distances which caused the robot to perform incorrect translation (shown in video below). In order to fix this issue, we thought of moving the robot backward for some of these parts in the trajectory, such that the wall is less distance away from the robot. These segments are shown below. For the large movement from (5, -2) to (5, 3), we also added an intermediary point at (5, 0) where the robot rotates 180° for the sensor to face the closer wall.</p>
+
+                    <pre><code class="language-">- (-4, -3) → (-2, -1)
+- (-2, -1) → (1, -1)
+- (5, -2) → (5, -2)
+- (5, -2) → (5, 3)
+- (5, 3) → (0, 3)
+- (0, 3) → (0, 0)</code></pre><br>
+
+                    <figure><iframe width="560" height="315" src="https://www.youtube.com/embed/4ZCnaeePlQA" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></figure>
+
+                    <p class="section-text">After incorporating this into the execution loop above, we found better results. Two of the good runs with this PID-based path following are shown below.</p>
+
+                    <figure>
+                        <iframe width="560" height="315" src="https://www.youtube.com/embed/dkwzKjAAAvA" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </figure>
+                    <figure>
+                        <iframe width="560" height="315" src="https://www.youtube.com/embed/5xaeiuZpZhs" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </figure>
+
+                    <p class="section-text">After several trials of this method, we realized that one of our pain points was the segment from (1, -1) to (2, -3). Given the skewed angle at both points, we found the robot to always turn slightly more or less at either of the points, which led to the rest of the trajectory getting messed up. Therefore, we modified the waypoints by changing (1, -1) to (2, -1) – now, the robot crosses the required point but still has to move only 90° at both points. This also led to better results with the path following, as shown in the video below. </p>
+
+                    <figure>
+                        <iframe width="560" height="315" src="https://www.youtube.com/embed/L7tFzi5HzXM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </figure>
+
+                    <p class="section-text">Overall, we found it extremely difficult to get a perfect run with this method. With the unknown variables and the environment, the tuning of both the PID controllers kept getting messed up after each run, if not after each point. We spent way longer than we should have to get a good attempt – often rerunning the robot without changing anything to get a completely different result. For some runs, we had to hardcode different PID gains and the angle scale factor for every segment in the trajectory, only to change them all again. The videos below show some of the erroneous runs.  Perhaps this is why we shouldn’t do open-loop control (even though the robot was closed-loop controlled on a lower level). </p>
+
+                    <figure>
+                        <iframe width="560" height="315" src="https://www.youtube.com/embed/Lh_LxcFjl4A" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </figure>
+
+                    <h4 class="section-header">Localization and Path Planning</h4>
+                    <p class="section-text">After spending a long time on getting a perfect run with PID, we thought to make the system smarter and “correct itself” with the help of Bayes filter localization. Essentially, we wanted the robot to detect when it is off its path, and correct itself by modifying its movement. This way, even if the PID controller makes a mistake, the robot will be able to adjust its movement to get back on the path. For this, the Bayes filter update step from Lab 12 seemed appropriate. To do the update step, the robot performs a 360° rotation over 20° increments to get a set of 18 TOF measurements around it, which are then sent back over to the computer to update the probability of the robot being in all possible poses on the map. The pose with the highest probability is the new belief of the robot. We had found the localization using the Bayes filter to be very accurate in the last lab, and in order to incorporate it into our system, we directly used the Lab 12 setup, with the <code class="inline-code">Localization</code> and <code class="inline-code">RealRobot</code> classes. </p>
+                    <p class="section-text">We started with introducing localization at one point in the trajectory, specifically (2, -3), because that was often the problematic point in the PID-based path following. The robot now reached (2, -3) using PID control like earlier, and then performed an observation loop to localize (done on the computer), and then calculates a new path to the next point (5, -3) based on the new belief. While this made reaching (5, -3) more certain, we realized that the orientation in which the robot will be after reaching the point will probably be different from that after reaching from (2, -3), and thus it would cause errors in the path afterward, if the robot was only moving using PID control. Thus, we ended up completely integrating localization at each waypoint, such that the path to the next point is calculated based on the current belief, instead of the last waypoint. This is shown in the pseudocode below. </p>
+
+                    <pre><code class="language-python"># Pseudocode for performing trajectory with localization
+                    
+curr_pose = (-4, -3, 0)
+trajectory = [(-4, -3),(-2, -1),(1, -1),(2, -3),(5, -3),(5, -2),(5, 3),(0, 3),(0, 0)]
+
+ble.send_command(TUNE_PID)
+
+for next_pose in trajectory[1:]:
+    # Calculate rotation required to get to next point and rotate 
+    rot = calc_rot(curr_pose, next_pose)    
+    ble.send_command(TURN_ANGLE)
+
+    # Calculate translation to get to next point and move 
+    trans = calc_trans(curr_pose, next_pose)
+    ble.send_command(MOVE)
+
+    # Localize 
+    loc.get_observation_data()
+    loc.update_step()
+
+    # Update pose from belief 
+    curr_pose = loc.belief
+
+    # Reinitialize grid belief as only update step 
+    loc.init_grid_beliefs()</code></pre><br>
+
+                    <figure>
+                        <iframe width="560" height="315" src="https://www.youtube.com/embed/rvz03qboRMo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </figure>
+
+                    <p class="section-text">As we can see in the video, with this algorithm the robot often misses a waypoint and just moves on to the next one without checking if it ever got all the points. While this fairs okay in the run shown, this often caused problems where the robot doesn’t do a path, maybe because of an obstacle, and then just moves on to the next point. Therefore, we added a checking capability to the algorithm, where the robot localizes after every segment and tries to go back to the point it missed. This is shown in the pseudocode below. A factor to control in this method is the error margin – how far away would a robot consider that it has reached a point? If we keep a margin of 0, it would make the path following super accurate, but as we see in the video below, the robot may begin to oscillate around a point, just to get it perfect. This is because of small errors in the robot movement and localization, and also the fact that the grid is discretized over 1 ft. squares – the robot might be on the boundary of the target block but localize to the adjacent one. Therefore, in our localization model, we added the error margin of 35 cm from the target – this allows the 4 blocks linearly adjacent to the target block (1 ft away), but not the ones diagonally adjacent. </p>
+
+                    <pre><code class="language-python"># Pseudocode for performing trajectory with localization and point checking 
+                    
+trajectory = [(-4, -3),(-2, -1),(1, -1),(2, -3),(5, -3),(5, -2),(5, 3),(0, 3),(0, 0)]
+
+curr_pose = (-4, -3, 0)
+next_pose = (-2, -1)
+
+done = False
+i = 1
+
+ble.send_command(TUNE_PID)
+
+while not done:
+    # Check if near the next point 
+    if (calc_trans(curr_pose, next_pose) < 0.35):
+        i = i + 1
+        next_pose = trajectory[i]
+
+        if i == len(trajectory) - 1:
+            done = True 
+
+
+    # Calculate rotation required to get to next point and rotate 
+    rot = calc_rot(curr_pose, next_pose)    
+    ble.send_command(TURN_ANGLE)
+
+    # Calculate translation to get to next point and move 
+    trans = calc_trans(curr_pose, next_pose)
+    ble.send_command(MOVE)
+
+    # Localize 
+    loc.get_observation_data()
+    loc.update_step()
+
+    # Update pose from belief 
+    curr_pose = loc.belief
+
+    # Reinitialize grid belief as only update step 
+    loc.init_grid_beliefs()</code></pre><br>
+
+                    <figure>
+                        <iframe width="560" height="315" src="https://www.youtube.com/embed/tnUhU_fP5kw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </figure>
+
+                    <figure>
+                        <iframe width="560" height="315" src="https://www.youtube.com/embed/59VhsZ2na8A" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </figure>
+                    <p class="section-text">The video above is of a localization run where the robot crashed to the box due to a mislocalization but corrected itself with the point checking to navigate to the rest of the points. While the robot successfully covered all the waypoints till (5, -2), we see that it gets stuck at that point. We found this in several of our attempts where the robot gets stuck at (5, -2) or (5, -3), trying to go further to (5, 3). Due to an error in the orientation control and the narrowness of the path behind the box, the robot incorrectly faces the obstacle and can’t go further to avoid a collision. In order to fix this issue, we thought of running the robot on the trajectory backward, from (0, 0) to (4, -3), with the order of points reversed. This way, the robot only has to perform two right-angle turns before crossing the narrow path and there is less room for error. After this modification in the path, we were able to get some decent runs and two of the best ones are included below where the robot almost perfectly executes all the waypoints in the trajectory! Since the error margin was set to one block, the robot missed some of the waypoints by going to the adjacent ones which is expected (and hopefully acceptable). </p>
+
+                    <figure>
+                        <iframe width="560" height="315" src="https://www.youtube.com/embed/pZdT8gnx1Kk" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </figure>
+                    <figure>
+                        <iframe width="560" height="315" src="https://www.youtube.com/embed/tPD2oGf7Nn0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </figure>
+
+                    <p class="section-text">This was my favorite lab! It was really awesome to see everything we implemented on the robot throughout the semester come together in this project in an almost seamless way. Despite all the hours we spent on running the robot again and again, seeing the final result was exhilerating, even though we never got an impeccable run. The path planning, especially with the localization, made me appreciate how difficult robotics can be, and yet, how smart we can make even such cheap robots. Overall, this course has been one of the best ECE courses I've taken and even with all the hard work we had to do over the semester to get to this point, I'm super glad I took it! Thank you so much to Professor Petersen and the course staff for the extremely fruitful experience, and all the help and teaching.</p>
+
+                    <h4 class="section-header">Appendix</h4>
+                    <p class="section-text">The following is the Jupyter notebook output for one of the good runs of executing the backward trajectory. </p>
+                    <pre><code class="language-">2022-05-20 02:23:30,354 | INFO     |: Initializing beliefs with a Uniform Distribution
+2022-05-20 02:23:30,357 | INFO     |: Uniform Belief with each cell value: 0.00051440329218107
+
+2022-05-20 02:23:30,786 | INFO     |: Movement: 1
+2022-05-20 02:23:30,787 | INFO     |: Currently At : (0.0, 0.0)
+2022-05-20 02:23:30,787 | INFO     |: Going to : (0.0, 3.0)
+2022-05-20 02:23:30,904 | INFO     |: Localizing
+2022-05-20 02:23:56,169 | INFO     |: Update Step
+2022-05-20 02:23:56,185 | INFO     |:      | Update Time: 0.013 secs
+2022-05-20 02:23:56,193 | INFO     |: Belief: (1.0000000000000009, -3.0, -170.0)
+2022-05-20 02:23:56,200 | INFO     |: Initializing beliefs with a Uniform Distribution
+2022-05-20 02:23:56,206 | INFO     |: Uniform Belief with each cell value: 0.00051440329218107
+
+2022-05-20 02:23:56,209 | INFO     |: Movement: 2
+2022-05-20 02:23:56,210 | INFO     |: Currently At : (1.0, -3.0)
+2022-05-20 02:23:56,218 | INFO     |: Going to : (0.0, 3.0)
+2022-05-20 02:23:56,881 | INFO     |: Localizing
+2022-05-20 02:24:21,773 | INFO     |: Update Step
+2022-05-20 02:24:21,797 | INFO     |:      | Update Time: 0.008 secs
+2022-05-20 02:24:21,797 | INFO     |: Belief: (6.0, 2.0, -30.0)
+2022-05-20 02:24:21,806 | INFO     |: Initializing beliefs with a Uniform Distribution
+2022-05-20 02:24:21,807 | INFO     |: Uniform Belief with each cell value: 0.00051440329218107
+
+2022-05-20 02:24:21,811 | INFO     |: Movement: 2
+2022-05-20 02:24:21,812 | INFO     |: Currently At : (6.0, 2.0)
+2022-05-20 02:24:21,812 | INFO     |: Going to : (0.0, 3.0)
+2022-05-20 02:24:22,624 | INFO     |: Localizing
+2022-05-20 02:24:48,185 | INFO     |: Update Step
+2022-05-20 02:24:48,196 | INFO     |:      | Update Time: 0.010 secs
+2022-05-20 02:24:48,199 | INFO     |: Belief: (0.0, 2.0, -170.0)
+2022-05-20 02:24:48,203 | INFO     |: Initializing beliefs with a Uniform Distribution
+2022-05-20 02:24:48,205 | INFO     |: Uniform Belief with each cell value: 0.00051440329218107
+
+2022-05-20 02:24:48,207 | INFO     |: Movement: 3
+2022-05-20 02:24:48,210 | INFO     |: Currently At : (0.0, 2.0)
+2022-05-20 02:24:48,213 | INFO     |: Going to : (5.0, 3.0)
+2022-05-20 02:24:49,024 | INFO     |: Localizing
+2022-05-20 02:25:13,858 | INFO     |: Update Step
+2022-05-20 02:25:13,874 | INFO     |:      | Update Time: 0.017 secs
+2022-05-20 02:25:13,878 | INFO     |: Belief: (5.000000000000001, 2.000000000000001, 10.0)
+2022-05-20 02:25:13,882 | INFO     |: Initializing beliefs with a Uniform Distribution
+2022-05-20 02:25:13,884 | INFO     |: Uniform Belief with each cell value: 0.00051440329218107
+
+2022-05-20 02:25:13,887 | INFO     |: Movement: 4
+2022-05-20 02:25:13,890 | INFO     |: Currently At : (5.0, 2.0)
+2022-05-20 02:25:13,893 | INFO     |: Going to : (5.0, -2.0)
+2022-05-20 02:25:14,577 | INFO     |: Localizing
+2022-05-20 02:25:39,189 | INFO     |: Update Step
+2022-05-20 02:25:39,200 | INFO     |:      | Update Time: 0.010 secs
+2022-05-20 02:25:39,203 | INFO     |: Belief: (5.0, -1.0, -90.0)
+2022-05-20 02:25:39,207 | INFO     |: Initializing beliefs with a Uniform Distribution
+2022-05-20 02:25:39,207 | INFO     |: Uniform Belief with each cell value: 0.00051440329218107
+
+2022-05-20 02:25:39,212 | INFO     |: Movement: 5
+2022-05-20 02:25:39,214 | INFO     |: Currently At : (5.0, -1.0)
+2022-05-20 02:25:39,217 | INFO     |: Going to : (5.0, -3.0)
+2022-05-20 02:25:39,547 | INFO     |: Localizing
+2022-05-20 02:26:04,379 | INFO     |: Update Step
+2022-05-20 02:26:04,395 | INFO     |:      | Update Time: 0.016 secs
+2022-05-20 02:26:04,396 | INFO     |: Belief: (6.000000000000001, -3.999999999999999, -90.0)
+2022-05-20 02:26:04,398 | INFO     |: Initializing beliefs with a Uniform Distribution
+2022-05-20 02:26:04,399 | INFO     |: Uniform Belief with each cell value: 0.00051440329218107
+
+2022-05-20 02:26:04,400 | INFO     |: Movement: 5
+2022-05-20 02:26:04,400 | INFO     |: Currently At : (6.0, -4.0)
+2022-05-20 02:26:04,402 | INFO     |: Going to : (5.0, -3.0)
+2022-05-20 02:26:05,162 | INFO     |: Localizing
+2022-05-20 02:26:29,345 | INFO     |: Update Step
+2022-05-20 02:26:29,355 | INFO     |:      | Update Time: 0.010 secs
+2022-05-20 02:26:29,361 | INFO     |: Belief: (4.0, -2.0, 150.0)
+2022-05-20 02:26:29,364 | INFO     |: Initializing beliefs with a Uniform Distribution
+2022-05-20 02:26:29,364 | INFO     |: Uniform Belief with each cell value: 0.00051440329218107
+
+2022-05-20 02:26:29,370 | INFO     |: Movement: 5
+2022-05-20 02:26:29,371 | INFO     |: Currently At : (4.0, -2.0)
+2022-05-20 02:26:29,375 | INFO     |: Going to : (5.0, -3.0)
+2022-05-20 02:26:30,244 | INFO     |: Localizing
+2022-05-20 02:26:55,144 | INFO     |: Update Step
+2022-05-20 02:26:55,154 | INFO     |:      | Update Time: 0.010 secs
+2022-05-20 02:26:55,162 | INFO     |: Belief: (5.0, -3.0, -30.0)
+2022-05-20 02:26:55,165 | INFO     |: Initializing beliefs with a Uniform Distribution
+2022-05-20 02:26:55,166 | INFO     |: Uniform Belief with each cell value: 0.00051440329218107
+
+2022-05-20 02:26:55,171 | INFO     |: Movement: 6
+2022-05-20 02:26:55,172 | INFO     |: Currently At : (5.0, -3.0)
+2022-05-20 02:26:55,177 | INFO     |: Going to : (2.0, -3.0)
+2022-05-20 02:26:55,972 | INFO     |: Localizing
+2022-05-20 02:27:20,460 | INFO     |: Update Step
+2022-05-20 02:27:20,475 | INFO     |:      | Update Time: 0.015 secs
+2022-05-20 02:27:20,475 | INFO     |: Belief: (3.0, -3.0, -170.0)
+2022-05-20 02:27:20,482 | INFO     |: Initializing beliefs with a Uniform Distribution
+2022-05-20 02:27:20,486 | INFO     |: Uniform Belief with each cell value: 0.00051440329218107
+
+2022-05-20 02:27:20,488 | INFO     |: Movement: 7
+2022-05-20 02:27:20,488 | INFO     |: Currently At : (3.0, -3.0)
+2022-05-20 02:27:20,493 | INFO     |: Going to : (1.0, -1.0)
+2022-05-20 02:27:21,126 | INFO     |: Localizing
+2022-05-20 02:27:45,180 | INFO     |: Update Step
+2022-05-20 02:27:45,199 | INFO     |:      | Update Time: 0.020 secs
+2022-05-20 02:27:45,209 | INFO     |: Belief: (1.0, -1.0, 110.0)
+2022-05-20 02:27:45,213 | INFO     |: Initializing beliefs with a Uniform Distribution
+2022-05-20 02:27:45,215 | INFO     |: Uniform Belief with each cell value: 0.00051440329218107
+
+2022-05-20 02:27:45,217 | INFO     |: Movement: 7
+2022-05-20 02:27:45,220 | INFO     |: Currently At : (1.0, -1.0)
+2022-05-20 02:27:45,222 | INFO     |: Going to : (-2.0, -1.0)
+2022-05-20 02:27:46,257 | INFO     |: Localizing
+2022-05-20 02:28:10,868 | INFO     |: Update Step
+2022-05-20 02:28:10,876 | INFO     |:      | Update Time: 0.008 secs
+2022-05-20 02:28:10,883 | INFO     |: Belief: (-2.0, -1.0, 150.0)
+2022-05-20 02:28:10,887 | INFO     |: Initializing beliefs with a Uniform Distribution
+2022-05-20 02:28:10,888 | INFO     |: Uniform Belief with each cell value: 0.00051440329218107
+
+2022-05-20 02:28:10,892 | INFO     |: Movement: 8
+2022-05-20 02:28:10,893 | INFO     |: Currently At : (-2.0, -1.0)
+2022-05-20 02:28:10,897 | INFO     |: Going to : (-4.0, -3.0)
+2022-05-20 02:28:11,936 | INFO     |: Localizing
+2022-05-20 02:28:36,906 | INFO     |: Update Step
+2022-05-20 02:28:36,924 | INFO     |:      | Update Time: 0.018 secs
+2022-05-20 02:28:36,930 | INFO     |: Belief: (-3.0, -2.0, -110.0)
+2022-05-20 02:28:36,932 | INFO     |: Initializing beliefs with a Uniform Distribution
+2022-05-20 02:28:36,933 | INFO     |: Uniform Belief with each cell value: 0.0005144032921810
+
+2022-05-20 02:28:37,502 | INFO     |: Done</code></pre>
+                </div>
+            </div>
+        
+        
+        </div>
+
+        <footer class="footer mt-auto py-3">
+            <div class="container">
+                <h5><a href="index.html">< home</a> | <a href="https://cei-lab.github.io/ECE4960-2022/Lab13.html">handout ></a></h5>
+                <p><a href="mailto:kr397@cornell.edu">KR397[AT]CORNELL[DOT]EDU</a></p>
+            </div>
+        </footer>  
+        
+        <script src="prism.js"></script>
+		<script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.min.js" integrity="sha384-w1Q4orYjBQndcko6MimVbzY0tgp4pWB4lZ7lr30WKz0vr/aWKhXdBNmNb5D92v7s" crossorigin="anonymous"></script>
+    </body>
+    
+</html>
